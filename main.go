@@ -37,18 +37,17 @@ func main() {
 	}
 	defer file.Close()
 
-	top10 := getTOP10(file)
-
-	for _, i := range top10 {
-		fmt.Println(i.url)
+	ntop10 := getTOP10(file)
+	for _, j := range ntop10.getURLS() {
+		fmt.Println(j)
 	}
 }
 
-func getTOP10(f *os.File) []logline {
+func getTOP10(f *os.File) loglines {
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
 
-	eList := []logline{}
+	eList := loglines{}
 
 	// Iterate through file line by line
 	for scanner.Scan() {
@@ -72,16 +71,19 @@ func getTOP10(f *os.File) []logline {
 			size: size,
 		}
 
-		if len(eList) == 0 {
+		if eList.Len() == 0 {
 			eList = append(eList, line)
 		} else {
-			smallest := eList[len(eList)-1]
-			if line.size > smallest.size && len(eList) == 10 {
-				eList[len(eList)-1] = line
+
+			smallest := eList[eList.Len()-1]
+			if line.size > smallest.size && eList.Len() == 10 {
+				eList[eList.Len()-1] = line
+			} else if line.size == smallest.size && eList.Len() == 10 {
+				continue
 			} else {
 				eList = append(eList, line)
 			}
-			sort.Sort(loglines(eList))
+			sort.Sort(eList)
 		}
 	}
 	return eList
@@ -114,6 +116,14 @@ type loglines []logline
 type logline struct {
 	url  string
 	size int
+}
+
+func (l loglines) getURLS() []string {
+	var urls []string
+	for _, u := range l {
+		urls = append(urls, u.url)
+	}
+	return urls
 }
 
 // Create Len, Less, Swat functions to implement sort.Interface
